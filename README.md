@@ -1,16 +1,7 @@
-# nodejs-typescript-starter
+# aavegotchi-leaderboard
 
-an awesome node.js starter with support for TypeScript and modern syntax
-
-## setup
-
-```sh
-git clone https://github.com/candoizo/nodejs-typescript-starter
-yarn
-cp .env.example .env
-yarn start
-```
+aavegotchi rarity farming leaderboard script
 
 ## usage
 
-`yarn start` to execute the main file
+`yarn start`
