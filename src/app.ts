@@ -12,6 +12,14 @@ const subgraphUrl =
 
 const client = new GraphQLClient(subgraphUrl);
 
+const winnerRange = 7_500;
+const round = 1;
+
+const traitRoundTiebreaker = (traitsA: number[], traitsB: number[]) => {
+	const tiebreakerIndex = round - 1;
+	return traitsA[tiebreakerIndex] - traitsB[tiebreakerIndex];
+};
+
 const allGotchiInfo = async () => {
 	const maxSupply = 25_000;
 	let queryStr = '';
@@ -19,6 +27,7 @@ const allGotchiInfo = async () => {
 		queryStr += gql` data${i}:aavegotchis(first:1000 where: {
             id_gt: ${i * 1_000},
             id_lte: ${i * 1000 + 1000}
+            baseRarityScore_gt: 0
         } orderBy:id) {
             id
             equippedWearables
@@ -105,6 +114,7 @@ const main = async () => {
 				return [
 					key,
 					{
+						id: key,
 						finalRarityScore: gotchiData[key].modifiedRarityScore,
 						finalTraits: gotchiData[key].modifiedNumericTraits,
 					},
@@ -112,18 +122,27 @@ const main = async () => {
 
 			const best = bestSetOfSets(sets);
 			const bestSetInfo = setInfo[best];
+			const bestSetBrsBoost = bestSetInfo.traitsBonuses[0];
 
 			const currentGotchiInfo = gotchiData[key];
 
 			const gotchiSetFinalTraits = currentGotchiInfo.modifiedNumericTraits.map(
-				(trait: number, index: number) => trait + bestSetInfo.traitsBonuses[index],
+				(trait: number, index: number) => {
+					if (index >= 4) return trait;
+					// traitsBonuses: [brs, nrg, agg, spk, brn]
+					return trait + bestSetInfo.traitsBonuses[index + 1];
+				},
 			);
 
-			const gotchiSetFinalRarityScore = rarityScoreBonus(gotchiSetFinalTraits);
+			// ! @TODO: boostDifference?
+
+			const gotchiSetFinalRarityScore =
+				rarityScoreBonus(gotchiSetFinalTraits) + bestSetBrsBoost;
 
 			return [
 				key,
 				{
+					id: key,
 					finalRarityScore: gotchiSetFinalRarityScore,
 					finalTraits: gotchiSetFinalTraits,
 				},
@@ -133,25 +152,31 @@ const main = async () => {
 	);
 
 	const finalRoundScores = {
-		rarity: [],
+		rarity: Object.values(gotchiBestSetTraitsRarityScore)
+			.sort((a, b) => {
+				// @ts-ignore
+				return b.finalRarityScore - a.finalRarityScore;
+			})
+			.slice(0, winnerRange),
 		kinship: Object.values(gotchiData)
 			.sort((a, b) => {
 				// @ts-ignore
 				return b.kinship - a.kinship;
 			})
-			.slice(0, 7500),
+			.slice(0, winnerRange),
 		experience: Object.values(gotchiData)
 			.sort((a, b) => {
 				// @ts-ignore
 				return b.experience - a.experience;
 			})
-			.slice(0, 7500),
+			.slice(0, winnerRange),
 	};
 
-	log(finalRoundScores);
-	// log(`aavegotchi rarity farming: S4 R1`);
-
-	// log(`mode: rarityScore`, `target block: idk`);
+	log(
+		finalRoundScores,
+		finalRoundScores.rarity[0],
+		gotchiBestSetTraitsRarityScore[19095],
+	);
 };
 
 main();
