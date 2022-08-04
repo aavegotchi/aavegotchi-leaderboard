@@ -21,5 +21,9 @@
 	"scripts": {
 		"lint": "prettier -c . && eslint .",
 		"start": "node --loader ts-node/esm src/app.ts"
+	},
+	"dependencies": {
+		"graphql": "^16.5.0",
+		"graphql-request": "^4.3.0"
 	}
 }
