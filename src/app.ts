@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import debug from 'debug';
 import { gql, GraphQLClient } from 'graphql-request';
-import setInfo from './setList';
+import setInfo from './setList.js';
 
 if (!process.env.DEBUG) process.exit(1);
 
@@ -23,6 +23,7 @@ const allGotchiInfo = async () => {
             id
             equippedWearables
             modifiedRarityScore
+            modifiedNumericTraits
         } `;
 	}
 
@@ -35,9 +36,90 @@ const allGotchiInfo = async () => {
 	);
 };
 
+const allSetsForItems = (items: number[]): number[] => {
+	const matchingSets = setInfo
+		.map(({ wearableIds }, index) => {
+			const includesSet = wearableIds.every((num) => items.includes(num));
+			if (includesSet) return index;
+			return 0;
+		})
+		.filter((data) => data != 0);
+	if (matchingSets.length > 0)
+		log(`these items`, items, `match these sets`, matchingSets);
+	return matchingSets;
+};
+
+const bestSetOfSets = (sets: number[]): number => {
+	const rawBoosts = sets.map((setIndex) => {
+		return setInfo[setIndex].traitsBonuses.reduce(
+			(curr, next) => curr + Math.abs(next),
+			0,
+		);
+	});
+
+	const findMax = (arr: number[]) => {
+		let max = 0;
+		for (let i = 0; i < arr.length; i++) {
+			if (arr[i] > max) {
+				max = arr[i];
+			}
+		}
+		return max;
+	};
+
+	const maxNum = findMax(rawBoosts);
+
+	const bestSetIndex = sets[rawBoosts.indexOf(maxNum)];
+
+	return bestSetIndex;
+};
+
+const rarityScoreBonus = (traits: number[]): number => {
+	// ! @TODO
+	return 0;
+};
+
 const main = async () => {
-	const res = await allGotchiInfo();
-	log(`gotchi res`, res);
+	const gotchiData = await allGotchiInfo();
+	log(`gotchi res`, gotchiData);
+
+	const gotchiToSets = Object.fromEntries(
+		Object.entries(gotchiData).map((info) => {
+			// @ts-ignore
+			const sets = allSetsForItems(info[1].equippedWearables);
+			const best = bestSetOfSets(sets);
+			if (sets.length > 1) log(`best set was: `, best, `of`, sets);
+			return [info[0], sets];
+		}),
+	);
+
+	const gotchiBestSetTraitsRarityScore = Object.fromEntries(
+		Object.entries(gotchiToSets).map(([key, sets]) => {
+			const best = bestSetOfSets(sets);
+			const bestSetInfo = setInfo[best];
+
+			const currentGotchiInfo = gotchiData[key];
+
+			const gotchiSetFinalTraits = currentGotchiInfo.modifiedNumericTraits.map(
+				(trait: number, index: number) => trait + bestSetInfo.traitsBonuses[index],
+			);
+
+			const gotchiSetFinalRarityScore = rarityScoreBonus(gotchiSetFinalTraits);
+
+			return [
+				key,
+				{
+					finalRarityScore: gotchiSetFinalRarityScore,
+					finalTraits: gotchiSetFinalTraits,
+				},
+			];
+			// return []
+		}),
+	);
+
+	// log(`aavegotchi rarity farming: S4 R1`);
+
+	// log(`mode: rarityScore`, `target block: idk`);
 };
 
 main();
