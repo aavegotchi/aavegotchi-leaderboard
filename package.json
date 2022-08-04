@@ -1,0 +1,25 @@
+{
+	"name": "nodejs-typescript-starter",
+	"version": "1.0.0",
+	"type": "module",
+	"license": "MIT",
+	"devDependencies": {
+		"@arkweid/lefthook": "^0.7.7",
+		"@trivago/prettier-plugin-sort-imports": "^3.2.0",
+		"@tsconfig/node18": "^1.0.1",
+		"@types/debug": "^4.1.7",
+		"@types/node": "^18.0.0",
+		"@typescript-eslint/eslint-plugin": "^5.30.3",
+		"@typescript-eslint/parser": "^5.30.3",
+		"debug": "^4.3.4",
+		"dotenv": "^16.0.1",
+		"eslint": "8.19.0",
+		"prettier": "^2.7.1",
+		"ts-node": "^10.8.2",
+		"typescript": "^4.7.4"
+	},
+	"scripts": {
+		"lint": "prettier -c . && eslint .",
+		"start": "node --loader ts-node/esm src/app.ts"
+	}
+}

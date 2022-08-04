@@ -1,0 +1,11 @@
+{
+	"tabWidth": 1,
+	"useTabs": true,
+	"singleQuote": true,
+	"trailingComma": "all",
+	"bracketSpacing": true,
+	"arrowParens": "always",
+	"importOrderSortSpecifiers": true,
+	"importOrder": ["dotenv", "<THIRD_PARTY_MODULES>", "^[./]"],
+	"importOrderCaseInsensitive": true
+}
