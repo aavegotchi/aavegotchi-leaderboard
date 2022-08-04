@@ -24,6 +24,8 @@ const allGotchiInfo = async () => {
             equippedWearables
             modifiedRarityScore
             modifiedNumericTraits
+            kinship
+            experience
         } `;
 	}
 
@@ -95,6 +97,15 @@ const main = async () => {
 
 	const gotchiBestSetTraitsRarityScore = Object.fromEntries(
 		Object.entries(gotchiToSets).map(([key, sets]) => {
+			if (sets.length == 0)
+				return [
+					key,
+					{
+						finalRarityScore: gotchiData[key].modifiedRarityScore,
+						finalTraits: gotchiData[key].modifiedNumericTraits,
+					},
+				];
+
 			const best = bestSetOfSets(sets);
 			const bestSetInfo = setInfo[best];
 
@@ -117,6 +128,23 @@ const main = async () => {
 		}),
 	);
 
+	const finalRoundScores = {
+		rarity: [],
+		kinship: Object.values(gotchiData)
+			.sort((a, b) => {
+				// @ts-ignore
+				return b.kinship - a.kinship;
+			})
+			.slice(0, 7500),
+		experience: Object.values(gotchiData)
+			.sort((a, b) => {
+				// @ts-ignore
+				return b.experience - a.experience;
+			})
+			.slice(0, 7500),
+	};
+
+	log(finalRoundScores);
 	// log(`aavegotchi rarity farming: S4 R1`);
 
 	// log(`mode: rarityScore`, `target block: idk`);
