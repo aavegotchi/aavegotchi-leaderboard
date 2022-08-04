@@ -76,9 +76,13 @@ const bestSetOfSets = (sets: number[]): number => {
 	return bestSetIndex;
 };
 
+const returnRarity = (number: number) => {
+	if (number < 50) return 100 - number;
+	else return number + 1;
+};
+
 const rarityScoreBonus = (traits: number[]): number => {
-	// ! @TODO
-	return 0;
+	return traits.reduce((curr, next) => curr + returnRarity(next), 0);
 };
 
 const main = async () => {
