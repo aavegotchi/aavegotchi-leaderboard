@@ -1,27 +1,40 @@
-import 'dotenv/config';
-import debug from 'debug';
-import jetpack from 'fs-jetpack';
 import { gql, GraphQLClient } from 'graphql-request';
 import setInfo from './setList.js';
 
-if (!process.env.DEBUG) process.exit(1);
-
-const log = debug(process.env.DEBUG);
-
-const winnerRange = 7_500;
-const season = 3;
-const round = 4;
-const block_number = 27404025;
 const subgraphUrl =
 	'https://api.thegraph.com/subgraphs/name/aavegotchi/aavegotchi-core-matic';
 
 const client = new GraphQLClient(subgraphUrl);
+const SUPPLY_CAP = 25_000;
 
-const allGotchiInfo = async () => {
-	const maxSupply = 25_000;
+export const seasonRoundBlockSnapshots = (season: number, round: number) =>
+	[
+		[14082019, 14645055, 15231396, 15748551],
+		[20633778, 21170980, 21708942, 22242200],
+		[25806267, 26308346, 26854118, 27404025],
+		[0, 0, 0, 0],
+	][season - 1][round - 1];
+
+type Re = {
+	id: number;
+	kinship: number;
+	equippedWearables: number[];
+	experience: number;
+	baseRarityScore: number;
+	modifiedRarityScore: number;
+	modifiedNumericTraits: number[];
+	name: string;
+	owner: {
+		id: string;
+	};
+};
+
+const allGotchiInfo = async (blockNumber?: number) => {
 	let queryStr = '';
-	for (let i = 0; i < maxSupply / 1_000; i++) {
-		queryStr += gql` data${i}:aavegotchis(block: {number: ${block_number}} first:1000 where: {
+	for (let i = 0; i < SUPPLY_CAP / 1_000; i++) {
+		queryStr += gql` data${i}:aavegotchis(${
+			blockNumber ? `block: {number: ${blockNumber}}` : ''
+		} first:1000 where: {
             id_gt: ${i * 1_000},
             id_lte: ${i * 1000 + 1000}
             baseRarityScore_gt: 0
@@ -32,20 +45,29 @@ const allGotchiInfo = async () => {
             modifiedNumericTraits
             kinship
             experience
+			name
+			owner {
+				id
+			}
         } `;
 	}
 
-	const info = await client.request(gql`{${queryStr}}`);
-	const gotchis: {
-		id: number;
-		kinship: number;
-		equippedWearables: number[];
-		experience: number;
-		baseRarityScore: number;
-		modifiedRarityScore: number;
-		modifiedNumericTraits: number[];
-	}[][] = Object.values(info);
-	return Object.fromEntries(gotchis.flat().map((data) => [data.id, data]));
+	const info = await client.request(
+		gql`{ _meta${
+			blockNumber ? `(block: {number: ${blockNumber}})` : ''
+		} { block { number }} ${queryStr}}`,
+	);
+	const gotchis = Object.entries(info)
+		.map(([key, val]) => {
+			if (key.startsWith('data')) return val;
+		})
+		.filter((data) => data !== undefined)
+		.flat() as Re[];
+
+	return {
+		block: info._meta.block,
+		data: Object.fromEntries(gotchis.map((data) => [data.id, data])),
+	};
 };
 
 const allSetsForItems = (items: number[]): number[] => {
@@ -56,16 +78,14 @@ const allSetsForItems = (items: number[]): number[] => {
 			if (includesSet) return index;
 			return 0;
 		})
-		.filter((data) => data != 0);
-	if (matchingSets.length > 0)
-		log(`these items`, items, `match these sets`, matchingSets);
+		.filter((data: number) => data != 0);
 	return matchingSets;
 };
 
 const bestSetOfSets = (sets: number[]): number => {
 	const rawBoosts = sets.map((setIndex) => {
 		return setInfo[setIndex].traitsBonuses.reduce(
-			(curr, next) => curr + Math.abs(next),
+			(curr: number, next: number) => curr + Math.abs(next),
 			0,
 		);
 	});
@@ -96,13 +116,27 @@ const rarityScoreBonus = (traits: number[]): number => {
 	return traits.reduce((curr, next) => curr + returnRarity(next), 0);
 };
 
-const main = async () => {
-	const gotchiData = await allGotchiInfo();
+export default async (
+	round: number,
+	season?: number,
+	blockNumber?: number,
+	exportRange?: number,
+) => {
+	if (!exportRange) exportRange = SUPPLY_CAP;
+	if (season) {
+		// if requesting a season's round, if snapshot taken force that block number
+		const newBlock = seasonRoundBlockSnapshots(season, round);
+		if (newBlock) blockNumber = newBlock;
+	}
+
+	const rawResults = await allGotchiInfo(blockNumber);
+
+	const gotchiData = rawResults.data;
 
 	const gotchiToSets = Object.fromEntries(
-		Object.entries(gotchiData).map((info) => {
-			const sets = allSetsForItems(info[1].equippedWearables);
-			return [info[0], sets];
+		Object.entries(gotchiData).map(([key, val]) => {
+			const sets = allSetsForItems(val.equippedWearables);
+			return [key, sets];
 		}),
 	);
 
@@ -182,27 +216,17 @@ const main = async () => {
 	};
 
 	const finalRoundScores = {
+		block: rawResults.block,
 		rarity: Object.values(gotchiBestSetTraitsRarityScore)
 			.sort((a, b) => tiebreaker(a, b, 'rarity'))
-			.slice(0, winnerRange),
+			.slice(0, exportRange),
 		kinship: Object.values(gotchiBestSetTraitsRarityScore)
 			.sort((a, b) => tiebreaker(a, b, 'kinship'))
-			.slice(0, winnerRange),
+			.slice(0, exportRange),
 		experience: Object.values(gotchiBestSetTraitsRarityScore)
 			.sort((a, b) => tiebreaker(a, b, 'experience'))
-			.slice(0, winnerRange),
+			.slice(0, exportRange),
 	};
 
-	// log(
-	// 	finalRoundScores,
-	// 	finalRoundScores.rarity[0],
-	// 	gotchiBestSetTraitsRarityScore[19095],
-	// );
-
-	await jetpack.writeAsync(
-		`data/s${season}/${round}/${block_number}/${Date.now()}.json`,
-		finalRoundScores,
-	);
+	return finalRoundScores;
 };
-
-main();

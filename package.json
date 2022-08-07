@@ -1,5 +1,5 @@
 {
-	"name": "nodejs-typescript-starter",
+	"name": "@aavegotchi/leaderboard",
 	"version": "1.0.0",
 	"type": "module",
 	"license": "MIT",
@@ -8,7 +8,9 @@
 		"@trivago/prettier-plugin-sort-imports": "^3.2.0",
 		"@tsconfig/node18": "^1.0.1",
 		"@types/debug": "^4.1.7",
+		"@types/gradient-string": "^1.1.2",
 		"@types/node": "^18.0.0",
+		"@types/yargs": "^17.0.11",
 		"@typescript-eslint/eslint-plugin": "^5.30.3",
 		"@typescript-eslint/parser": "^5.30.3",
 		"debug": "^4.3.4",
@@ -20,11 +22,19 @@
 	},
 	"scripts": {
 		"lint": "prettier -c . && eslint .",
-		"start": "node --loader ts-node/esm src/app.ts"
+		"start": "node --loader ts-node/esm src/app.ts",
+		"cli": "src/cli.js"
 	},
 	"dependencies": {
+		"cli-table3": "^0.6.2",
 		"fs-jetpack": "^4.3.1",
+		"gradient-string": "^2.0.1",
 		"graphql": "^16.5.0",
-		"graphql-request": "^4.3.0"
+		"graphql-request": "^4.3.0",
+		"ora": "^6.1.2",
+		"yargs": "^17.5.1"
+	},
+	"bin": {
+		"aavegotchi-leaderboard": "src/cli.js"
 	}
 }

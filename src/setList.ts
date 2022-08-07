@@ -521,9 +521,7 @@ export default [
 		traitsBonuses: [5, -1, -1, -1, 0],
 		allowedCollaterals: [],
 	},
-
 	//new
-
 	{
 		name: 'VR Gamer',
 		wearableIds: [202, 203, 204],
@@ -560,7 +558,6 @@ export default [
 		traitsBonuses: [3, 0, 0, 2, 0],
 		allowedCollaterals: [],
 	},
-
 	{
 		name: 'Venly Biker',
 		wearableIds: [206, 207, 208, 209],
@@ -770,7 +767,6 @@ export default [
 		traitsBonuses: [2, 1, 0, 0, 0],
 		allowedCollaterals: [],
 	},
-
 	{
 		setId: 123,
 		name: 'Aarcher',

@@ -2,3 +2,5 @@ node_modules/
 *lock.json
 *.lock
 .env*
+src/*.js
+!src/cli.js
