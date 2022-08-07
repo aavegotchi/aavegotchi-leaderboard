@@ -73,8 +73,15 @@ const allGotchiInfo = async (blockNumber?: number) => {
 const allSetsForItems = (items: number[]): number[] => {
 	const matchingSets = setInfo
 		.map(({ wearableIds }, index) => {
-			// ! @TODO
-			const includesSet = wearableIds.every((num) => items.includes(num));
+			let itemsMutable = items;
+			const includesSet = wearableIds.every((num) => {
+				if (itemsMutable.includes(num)) {
+					// remove the matches to avoid double counting
+					itemsMutable = itemsMutable.filter((item) => item != num);
+					return true;
+				}
+				return false;
+			});
 			if (includesSet) return index;
 			return 0;
 		})
@@ -116,7 +123,7 @@ const rarityScoreBonus = (traits: number[]): number => {
 	return traits.reduce((curr, next) => curr + returnRarity(next), 0);
 };
 
-export default async (
+export const leaderboard = async (
 	round: number,
 	season?: number,
 	blockNumber?: number,

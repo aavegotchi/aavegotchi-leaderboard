@@ -1,7 +1,6 @@
 {
 	"name": "@aavegotchi/leaderboard",
 	"version": "1.0.0",
-	"type": "module",
 	"license": "MIT",
 	"devDependencies": {
 		"@arkweid/lefthook": "^0.7.7",
@@ -22,8 +21,10 @@
 	},
 	"scripts": {
 		"lint": "prettier -c . && eslint .",
+		"build": "tsc",
+		"prepub": "yarn cache clean && yarn build && yarn pack",
 		"start": "node --loader ts-node/esm src/app.ts",
-		"cli": "src/cli.js"
+		"cli": "src/cli.mjs"
 	},
 	"dependencies": {
 		"cli-table3": "^0.6.2",
@@ -34,7 +35,17 @@
 		"ora": "^6.1.2",
 		"yargs": "^17.5.1"
 	},
-	"bin": {
-		"aavegotchi-leaderboard": "src/cli.js"
+	"bin": "src/cli.mjs",
+	"main": "src/app.js",
+	"files": [
+		"src/*.js",
+		"src/cli.mjs"
+	],
+	"homepage": "https://github.com/aavegotchi/aavegotchi-leaderboard",
+	"bugs": {
+		"url": "https://github.com/aavegotchi/aavegotchi-leaderboard/issues"
+	},
+	"publishConfig": {
+		"access": "public"
 	}
 }

@@ -5,7 +5,7 @@ import gradient from 'gradient-string';
 import ora from 'ora';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
-import main, { seasonRoundBlockSnapshots } from './app.js';
+import { leaderboard, seasonRoundBlockSnapshots } from './app.js';
 
 const tintStr = gradient('rgb(107, 37, 231)', 'rgb(250, 52, 243)');
 const warnStr = gradient('rgb(250, 52, 243)', 'rgb(107, 37, 231)');
@@ -81,7 +81,7 @@ const cli = async () => {
 	spinner.color = 'magenta';
 	spinner.start();
 
-	const origResults = await main(
+	const origResults = await leaderboard(
 		rarity_round,
 		rarity_season,
 		queryBlock,

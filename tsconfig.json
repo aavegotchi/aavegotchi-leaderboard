@@ -1,7 +1,10 @@
 {
 	"extends": "@tsconfig/node18/tsconfig.json",
 	"compilerOptions": {
-		"module": "esnext",
+		"module": "commonjs",
+		"target": "es6",
+		"esModuleInterop": true,
+		"lib": ["es2015", "dom"],
 		"baseUrl": "src/",
 		"resolveJsonModule": true
 	},
