@@ -15,6 +15,7 @@
 		"debug": "^4.3.4",
 		"dotenv": "^16.0.1",
 		"eslint": "8.19.0",
+		"jsdoc-to-markdown": "^7.1.1",
 		"prettier": "^2.7.1",
 		"ts-node": "^10.8.2",
 		"typescript": "^4.7.4"
@@ -23,6 +24,7 @@
 		"lint": "prettier -c . && eslint .",
 		"build": "tsc",
 		"prepub": "yarn cache clean && yarn build && yarn pack",
+		"docs": "yarn build && yarn jsdoc2md src/app.js",
 		"start": "node --loader ts-node/esm src/app.ts",
 		"cli": "src/cli.mjs"
 	},
