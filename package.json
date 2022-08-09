@@ -41,8 +41,10 @@
 	"main": "src/app.js",
 	"files": [
 		"src/*.js",
-		"src/cli.mjs"
+		"src/cli.mjs",
+		"src/app.d.ts"
 	],
+	"types": "src/app.d.ts",
 	"homepage": "https://github.com/aavegotchi/aavegotchi-leaderboard",
 	"bugs": {
 		"url": "https://github.com/aavegotchi/aavegotchi-leaderboard/issues"

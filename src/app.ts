@@ -11,7 +11,7 @@ const SUPPLY_CAP = 25_000;
  * @description Checks whether the setItems is a subset of the equippedWearables
  * @param {number[]} setItems - Set to check the first array is a subset of the second array
  * @param {number[]} equippedWearables - Set to check the first array is a subset of the second array
- * @returns {boolean} - True if the equippedWearables match the setItems
+ * @returns {boolean} True if the equippedWearables match the setItems
  */
 export const isSetItemsInEquippedWearables = (
 	setItems: number[],
@@ -48,7 +48,7 @@ export const isSetItemsInEquippedWearables = (
 /**
  * @description This function will return all of the sets that a player has equipped based on the items they have equipped
  * @param {number[]} items - An array of all the item ids that the player has equipped
- * @returns {number[]} - An array of all the set ids that the player has equipped
+ * @returns {number[]} An array of all the set ids that the player has equipped
  */
 export const allSetsForItems = (items: number[]): number[] => {
 	const matchingSets = setInfo
@@ -102,7 +102,7 @@ export const returnRarity = (number: number) => {
 
 /**
  * @description Takes an array of trait values and returns the total rarity score bonus.
- * @param {number[]} traits An array of trait values.
+ * @param {number[]} traits - An array of trait values.
  * @returns {number} The total rarity score bonus.
  */
 export const rarityScoreBonus = (traits: number[]): number => {
@@ -111,8 +111,8 @@ export const rarityScoreBonus = (traits: number[]): number => {
 
 /**
  * @description Get the block snapshots for the given season and round.
- * @param {number} season The season number
- * @param {number} round The round number
+ * @param {number} season - The season number
+ * @param {number} round - The round number
  * @returns {number|undefined} A canonical snapshot block number for the given season and round. 0/undefined if not set.
  */
 export const seasonRoundBlockSnapshots = (
@@ -127,10 +127,10 @@ export const seasonRoundBlockSnapshots = (
 	][season - 1][round - 1];
 
 /**
- * @description Async function to fetch all Aavegotchi information from subgraph
+ * @description Fetch all Aavegotchi information from subgraph
  * @async
  * @param {number} [blockNumber] - The number of the block to query
- * @returns {Promise<Object>} - Returns data in a promise
+ * @returns {Promise<Object>} Returns data in a promise
  */
 export const aavegotchis = async (blockNumber?: number) => {
 	let queryStr = '';
@@ -186,12 +186,13 @@ export const aavegotchis = async (blockNumber?: number) => {
 };
 
 /**
- * @description Returns the leaderboard for a given round and optionally a past season
+ * @description Returns the leaderboard for a given round
+ * @async
  * @param {number} round - The round for which to return the leaderboard
  * @param {number} [season] - The season for which to return the leaderboard
  * @param {number} [blockNumber] - The block number for which to return the leaderboard
  * @param {number} [exportRange] - The amount of results to return
- * @returns {Promise<Object>} - An object containing the leaderboard results
+ * @returns {Promise<Object>} An object containing the leaderboard results
  */
 export const leaderboard = async (
 	round: number,
@@ -287,9 +288,16 @@ export const leaderboard = async (
 	) => {
 		// no tiebreaker
 		if (a[type] != b[type]) return b[type] - a[type];
+
 		// trait tiebreaker
 		const tiebreakerIndex = round - 1;
-		return b.setTraits[tiebreakerIndex] - a.setTraits[tiebreakerIndex];
+
+		const distanceFrom50 = (num: number): number => 50 + Math.abs(num);
+
+		return (
+			distanceFrom50(b.setTraits[tiebreakerIndex]) -
+			distanceFrom50(a.setTraits[tiebreakerIndex])
+		);
 	};
 
 	const bestGotchisArray = Object.values(gotchiBestSetTraitsRarityScore);

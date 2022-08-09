@@ -38,10 +38,10 @@ npx @candoizo/aavegotchi-leaderboard --help
 <dd><p>Get the block snapshots for the given season and round.</p>
 </dd>
 <dt><a href="#aavegotchis">aavegotchis([blockNumber])</a> ⇒ <code>Promise.&lt;Object&gt;</code></dt>
-<dd><p>Async function to fetch all Aavegotchi information from subgraph</p>
+<dd><p>Fetch all Aavegotchi information from subgraph</p>
 </dd>
 <dt><a href="#leaderboard">leaderboard(round, [season], [blockNumber], [exportRange])</a> ⇒ <code>Promise.&lt;Object&gt;</code></dt>
-<dd><p>Returns the leaderboard for a given round and optionally a past season</p>
+<dd><p>Returns the leaderboard for a given round</p>
 </dd>
 </dl>
 
@@ -52,7 +52,7 @@ npx @candoizo/aavegotchi-leaderboard --help
 Checks whether the setItems is a subset of the equippedWearables
 
 **Kind**: global function  
-**Returns**: <code>boolean</code> - - True if the equippedWearables match the setItems
+**Returns**: <code>boolean</code> - True if the equippedWearables match the setItems
 
 | Param             | Type                              | Description                                                  |
 | ----------------- | --------------------------------- | ------------------------------------------------------------ |
@@ -66,7 +66,7 @@ Checks whether the setItems is a subset of the equippedWearables
 This function will return all of the sets that a player has equipped based on the items they have equipped
 
 **Kind**: global function  
-**Returns**: <code>Array.&lt;number&gt;</code> - - An array of all the set ids that the player has equipped
+**Returns**: <code>Array.&lt;number&gt;</code> - An array of all the set ids that the player has equipped
 
 | Param | Type                              | Description                                               |
 | ----- | --------------------------------- | --------------------------------------------------------- |
@@ -129,10 +129,10 @@ Get the block snapshots for the given season and round.
 
 ## aavegotchis([blockNumber]) ⇒ <code>Promise.&lt;Object&gt;</code>
 
-Async function to fetch all Aavegotchi information from subgraph
+Fetch all Aavegotchi information from subgraph
 
 **Kind**: global function  
-**Returns**: <code>Promise.&lt;Object&gt;</code> - - Returns data in a promise
+**Returns**: <code>Promise.&lt;Object&gt;</code> - Returns data in a promise
 
 | Param         | Type                | Description                      |
 | ------------- | ------------------- | -------------------------------- |
@@ -142,10 +142,10 @@ Async function to fetch all Aavegotchi information from subgraph
 
 ## leaderboard(round, [season], [blockNumber], [exportRange]) ⇒ <code>Promise.&lt;Object&gt;</code>
 
-Returns the leaderboard for a given round and optionally a past season
+Returns the leaderboard for a given round
 
 **Kind**: global function  
-**Returns**: <code>Promise.&lt;Object&gt;</code> - - An object containing the leaderboard results
+**Returns**: <code>Promise.&lt;Object&gt;</code> - An object containing the leaderboard results
 
 | Param         | Type                | Description                                          |
 | ------------- | ------------------- | ---------------------------------------------------- |

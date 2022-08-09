@@ -6,7 +6,8 @@
 		"esModuleInterop": true,
 		"lib": ["es2015", "dom"],
 		"baseUrl": "src/",
-		"resolveJsonModule": true
+		"resolveJsonModule": true,
+		"declaration": true
 	},
 	"include": ["src/*.ts"],
 	"exclude": ["node_modules", "data"]
