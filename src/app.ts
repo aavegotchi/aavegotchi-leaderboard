@@ -37,8 +37,7 @@ export const isSetItemsInEquippedWearables = (
 
 	for (const val of Object.keys(set1).map(Number)) {
 		// If a value doesn't exist in the second set or the key count is less
-		if (!set2[val] || set2[val] > set1[val]) {
-			// Return false since it's not a subset
+		if (!set2[val] || set1[val] > set2[val]) {
 			return false;
 		}
 	}
@@ -292,7 +291,7 @@ export const leaderboard = async (
 		// trait tiebreaker
 		const tiebreakerIndex = round - 1;
 
-		const distanceFrom50 = (num: number): number => 50 + Math.abs(num);
+		const distanceFrom50 = (num: number): number => Math.abs(num - 50);
 
 		return (
 			distanceFrom50(b.setTraits[tiebreakerIndex]) -
