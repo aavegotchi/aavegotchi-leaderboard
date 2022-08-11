@@ -1,11 +1,47 @@
 import { gql, GraphQLClient } from 'graphql-request';
-import setInfo from './setList.js';
+import wearableSets from './setList.js';
+
+type LeaderboardCategories = 'rarity' | 'kinship' | 'experience';
+
+type SubgraphResult = {
+	id: string;
+	kinship: string;
+	equippedWearables: number[];
+	experience: string;
+	baseRarityScore: string;
+	modifiedRarityScore: string;
+	modifiedNumericTraits: number[];
+	name: string;
+	lastInteracted: number;
+	collateral: string;
+	owner: {
+		id: string;
+	};
+};
+
+type LeaderboardResult = {
+	data: SubgraphResult;
+	rarity: number;
+	kinship: number;
+	experience: number;
+	setTraits: number[];
+	bestSetInfo: unknown | undefined;
+};
 
 const subgraphUrl =
 	'https://api.thegraph.com/subgraphs/name/aavegotchi/aavegotchi-core-matic';
 
 const client = new GraphQLClient(subgraphUrl);
 const SUPPLY_CAP = 25_000;
+
+/**
+ * @description Get set information by index in the list of sets.
+ * @param {number} index - The index of the set in the list, starting at 0
+ * @returns The current set data at the given index.
+ */
+export const setData = (index: number) => {
+	return wearableSets[index];
+};
 
 /**
  * @description Checks whether the setItems is a subset of the equippedWearables
@@ -47,10 +83,10 @@ export const isSetItemsInEquippedWearables = (
 /**
  * @description This function will return all of the sets that a player has equipped based on the items they have equipped
  * @param {number[]} items - An array of all the item ids that the player has equipped
- * @returns {number[]} An array of all the set ids that the player has equipped
+ * @returns {number[]} An array of all the set by index that the player has equipped
  */
 export const allSetsForItems = (items: number[]): number[] => {
-	const matchingSets = setInfo
+	const matchingSets = wearableSets
 		.map(({ wearableIds }, index) => {
 			if (isSetItemsInEquippedWearables(wearableIds, items)) return index;
 			return 0;
@@ -60,13 +96,44 @@ export const allSetsForItems = (items: number[]): number[] => {
 };
 
 /**
+ * @description This function will return all of the sets that an Aavegotchi has equipped based on the items they have equipped and collateral
+ * @param {SubgraphResult} aavegotchi - Object representing an Aavegotchi subgraph result with equippedWearables and collateral properties
+ * @returns {number[]} An array of all the set by index that the player has equipped
+ */
+export const allSetsForAavegotchi = (aavegotchi: SubgraphResult): number[] => {
+	const matchingSets = allSetsForItems(aavegotchi.equippedWearables);
+
+	const setsMatchingAllowedCollateral = matchingSets.filter((setIndex) => {
+		const set = setData(setIndex);
+		if (set && set?.allowedCollaterals.length > 0) {
+			const collaterals = [
+				'',
+				'0x20D3922b4a1A8560E1aC99FBA4faDe0c849e2142', // maweth
+				'0x823CD4264C1b951C9209aD0DeAea9988fE8429bF', // maave
+				'0x98ea609569bD25119707451eF982b90E3eb719cD', // malink
+				// @todo need collateralList if more are added
+			];
+			const setCollateralAddresses = set.allowedCollaterals.map(
+				(collateralNumber) => collaterals[collateralNumber].toLowerCase(),
+			);
+			const setMatchesCollateral = setCollateralAddresses.includes(
+				aavegotchi.collateral.toLowerCase(),
+			);
+			return setMatchesCollateral;
+		}
+		return true;
+	});
+	return setsMatchingAllowedCollateral;
+};
+
+/**
  * @description Takes an array of set indices and returns the index of the set with the best bonuses
  * @param {number[]} sets - An array of set indices
  * @returns {number} The index of the set with the best bonuses
  */
 export const bestSetOfSets = (sets: number[]): number => {
 	const rawBoosts = sets.map((setIndex) => {
-		return setInfo[setIndex].traitsBonuses.reduce(
+		return wearableSets[setIndex].traitsBonuses.reduce(
 			(curr: number, next: number) => curr + Math.abs(next),
 			0,
 		);
@@ -109,6 +176,24 @@ export const rarityScoreBonus = (traits: number[]): number => {
 };
 
 /**
+ * @description Get the on-chain kinship using sui the current kinship and last interaction timestamp to calculate kinship, to get accurate value from subgraph Aavegotchis
+ * @param {number} kinship - A kinship value.
+ * @param {number} lastInteracted - A timestamp of the last interaction.
+ * @returns {number} A kinship score.
+ * https://github.com/aavegotchi/aavegotchi-contracts/blob/847e437bf31a746b520c1b506adef7788716e797/contracts/Aavegotchi/libraries/LibAavegotchi.sol#L223
+ */
+export const kinshipMinusLastInteracted = (
+	kinship: number,
+	lastInteracted: number,
+): number => {
+	const dayInSeconds = 60 * 60 * 24;
+	const now = Date.now();
+	const sinceLastInteraction = now - lastInteracted;
+	const daysSinceLastInteraction = dayInSeconds / sinceLastInteraction;
+	return kinship - Math.round(daysSinceLastInteraction);
+};
+
+/**
  * @description Get the block snapshots for the given season and round.
  * @param {number} season - The season number
  * @param {number} round - The round number
@@ -148,6 +233,8 @@ export const aavegotchis = async (blockNumber?: number) => {
             kinship
             experience
 			name
+			lastInteracted
+			collateral
 			owner {
 				id
 			}
@@ -164,19 +251,7 @@ export const aavegotchis = async (blockNumber?: number) => {
 			if (key.startsWith('data')) return val;
 		})
 		.filter((data) => data !== undefined)
-		.flat() as {
-		id: number;
-		kinship: number;
-		equippedWearables: number[];
-		experience: number;
-		baseRarityScore: number;
-		modifiedRarityScore: number;
-		modifiedNumericTraits: number[];
-		name: string;
-		owner: {
-			id: string;
-		};
-	}[];
+		.flat() as SubgraphResult[];
 
 	return {
 		block: info._meta.block,
@@ -212,78 +287,72 @@ export const leaderboard = async (
 
 	const gotchiToSets = Object.fromEntries(
 		Object.entries(gotchiData).map(([key, val]) => {
-			const sets = allSetsForItems(val.equippedWearables);
+			const sets = allSetsForAavegotchi(val);
 			return [key, sets];
 		}),
 	);
 
-	const gotchiBestSetTraitsRarityScore = Object.fromEntries(
-		Object.entries(gotchiToSets).map(([key, sets]) => {
-			const currentGotchiInfo = gotchiData[key];
-			if (sets.length == 0)
+	const gotchiBestSetTraitsRarityScore: { [key: string]: LeaderboardResult } =
+		Object.fromEntries(
+			Object.entries(gotchiToSets).map(([key, sets]) => {
+				const currentGotchiInfo = gotchiData[key];
+				if (sets.length == 0)
+					return [
+						key,
+						{
+							data: currentGotchiInfo,
+							rarity: Number(gotchiData[key].modifiedRarityScore),
+							kinship: Number(gotchiData[key].kinship),
+							experience: Number(gotchiData[key].experience),
+							setTraits: gotchiData[key].modifiedNumericTraits,
+							bestSetInfo: undefined,
+						},
+					];
+
+				const best = bestSetOfSets(sets);
+				const bestSetInfo = wearableSets[best];
+				const bestSetTraitBoots = bestSetInfo.traitsBonuses.slice(
+					1,
+					bestSetInfo.traitsBonuses.length,
+				);
+
+				const gotchiSetFinalTraits = currentGotchiInfo.modifiedNumericTraits.map(
+					(trait: number, index: number) => {
+						if (index >= 4) return trait;
+						return trait + bestSetTraitBoots[index];
+					},
+				);
+
+				const setsTraitsRarityScore = rarityScoreBonus(gotchiSetFinalTraits);
+				const bonusDifference =
+					setsTraitsRarityScore -
+					rarityScoreBonus(currentGotchiInfo.modifiedNumericTraits);
+
+				const bestSetBrsBoost = bestSetInfo.traitsBonuses[0];
+
+				const finalRarity =
+					Number(currentGotchiInfo.modifiedRarityScore) +
+					bonusDifference +
+					bestSetBrsBoost;
+
 				return [
 					key,
 					{
-						...currentGotchiInfo,
-						rarity: gotchiData[key].modifiedRarityScore,
-						setTraits: gotchiData[key].modifiedNumericTraits,
+						data: currentGotchiInfo,
+						rarity: finalRarity,
+						kinship: Number(gotchiData[key].kinship),
+						experience: Number(gotchiData[key].experience),
+						setTraits: gotchiSetFinalTraits,
+						bestSetInfo,
 					},
 				];
-
-			const best = bestSetOfSets(sets);
-			const bestSetInfo = setInfo[best];
-			const bestSetTraitBoots = bestSetInfo.traitsBonuses.slice(
-				1,
-				bestSetInfo.traitsBonuses.length,
-			);
-
-			const gotchiSetFinalTraits = currentGotchiInfo.modifiedNumericTraits.map(
-				(trait: number, index: number) => {
-					if (index >= 4) return trait;
-					return trait + bestSetTraitBoots[index];
-				},
-			);
-
-			const setsTraitsRarityScore = rarityScoreBonus(gotchiSetFinalTraits);
-			const bonusDifference =
-				setsTraitsRarityScore -
-				rarityScoreBonus(currentGotchiInfo.modifiedNumericTraits);
-
-			const bestSetBrsBoost = bestSetInfo.traitsBonuses[0];
-
-			const finalRarity =
-				Number(currentGotchiInfo.modifiedRarityScore) +
-				bonusDifference +
-				bestSetBrsBoost;
-
-			return [
-				key,
-				{
-					...currentGotchiInfo,
-					rarity: finalRarity,
-					setTraits: gotchiSetFinalTraits,
-					bestSetInfo,
-				},
-			];
-		}),
-	);
-
-	type Result = {
-		id: number;
-		kinship: number;
-		equippedWearables: number[];
-		experience: number;
-		baseRarityScore: number;
-		modifiedRarityScore: number;
-		modifiedNumericTraits: number[];
-		rarity: number;
-		setTraits: number[];
-	};
+			}),
+		);
 
 	const tiebreaker = (
-		a: Result,
-		b: Result,
-		type: 'rarity' | 'kinship' | 'experience',
+		a: LeaderboardResult,
+		b: LeaderboardResult,
+		type: LeaderboardCategories,
 	) => {
 		// no tiebreaker
 		if (a[type] != b[type]) return b[type] - a[type];

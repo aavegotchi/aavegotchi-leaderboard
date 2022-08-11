@@ -120,11 +120,13 @@ const cli = async () => {
 			t.push(
 				...results[field]
 					.slice(0, 10)
-					.map((data, index) => [
-						origResults[field].indexOf(data) + 1,
-						`${data.name} (#${data.id})`,
-						data.owner.id.slice(0, 4) + '...' + data.owner.id.slice(-4),
-						data[field],
+					.map((finalData, index) => [
+						origResults[field].indexOf(finalData) + 1,
+						`${finalData.data.name} (#${finalData.data.id})`,
+						finalData.data.owner.id.slice(0, 4) +
+							'...' +
+							finalData.data.owner.id.slice(-4),
+						finalData[field],
 					]),
 			);
 			console.log(t.toString());
@@ -134,7 +136,7 @@ const cli = async () => {
 		else makeTable(args.p);
 	} else {
 		// if not previewing, save data
-		const path = `data/s_${rarity_season}/r_${rarity_round}/block_${
+		const path = `aavegotchi-leaderboard-data/s_${rarity_season}/r_${rarity_round}/block_${
 			results.block.number
 		}/t_${Date.now()}.json`;
 		await jetpack.writeAsync(path, results);

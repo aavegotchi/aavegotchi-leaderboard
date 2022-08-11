@@ -3,7 +3,6 @@
 	"version": "1.0.0",
 	"license": "MIT",
 	"devDependencies": {
-		"@arkweid/lefthook": "^0.7.7",
 		"@trivago/prettier-plugin-sort-imports": "^3.2.0",
 		"@tsconfig/node18": "^1.0.1",
 		"@types/debug": "^4.1.7",
@@ -23,7 +22,7 @@
 	"scripts": {
 		"lint": "prettier -c . && eslint .",
 		"build": "tsc",
-		"prepub": "yarn cache clean && yarn build && yarn pack",
+		"prepub": "yarn build && yarn pack",
 		"docs": "yarn build && yarn jsdoc2md src/app.js",
 		"start": "node --loader ts-node/esm src/app.ts",
 		"cli": "src/cli.mjs"
